@@ -81,14 +81,6 @@ class Attribute(object):
         attrs = maya.cmds.listAttr(name, **kwargs) or []
         return [cls(name, attr) for attr in attrs]
 
-    @classmethod
-    def deleteProxyAttrs(cls, name):
-        """Delete all the proxy attributes for the given object name."""
-        attrs = cls.listAttr(name, unlocked=True, keyable=True) or []
-        for attr in attrs:
-            if attr.isProxy():
-                attr.delete()
-
     def __init__(self, name, attr=None, value=None, type=None, cache=True):
         """
         :type name: str
@@ -421,10 +413,6 @@ class Attribute(object):
         fullname = self.fullname()
         startTime, endTime = time
 
-        if self.isProxy():
-            logger.debug("Cannot set anim curve for proxy attribute")
-            return
-
         if not self.exists():
             logger.debug("Attr does not exists")
             return
@@ -488,23 +476,22 @@ class Attribute(object):
 
         :rtype: str | None
         """
-        result = None
+        plug = self.fullname()
 
-        if self.exists():
+        if maya.cmds.objExists(plug):
 
-            n = self.listConnections(plugs=True, destination=False)
+            isDynamic = maya.cmds.listAttr(plug, userDefined=True)
+
+            if isDynamic and maya.cmds.addAttr(plug, query=True, usedAsProxy=True):
+                plug = maya.cmds.listConnections(plug, plugs=True, destination=False)
+
+            n = maya.cmds.listConnections(plug, plugs=True, destination=False)
+
+            if n and "character" in maya.cmds.nodeType(n):
+                n = maya.cmds.listConnections(n, plugs=True, destination=False)
 
             if n and "animCurve" in maya.cmds.nodeType(n):
-                result = n
-
-            elif n and "character" in maya.cmds.nodeType(n):
-                n = maya.cmds.listConnections(n, plugs=True,
-                                              destination=False)
-                if n and "animCurve" in maya.cmds.nodeType(n):
-                    result = n
-
-            if result:
-                return result[0].split(".")[0]
+                return n[0].split(".")[0]
 
     def isConnected(self, ignoreConnections=None):
         """

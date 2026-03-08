@@ -336,9 +336,11 @@ class Library(QtCore.QObject):
         """
         patterns = studiolibrary.config.get('ignorePaths', [])
         patterns.append("*/.*")
+        patterns.append("*.theme")
         patterns.append("*.python")
         patterns.append("*.playblast")
         patterns.append("*.playblast_settings")
+        patterns.append("*.batch_poses")
 
         for pattern in patterns:
             if fnmatch.fnmatch(path, pattern):

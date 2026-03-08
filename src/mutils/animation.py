@@ -295,6 +295,23 @@ def duplicateNode(node, name):
     return [new]
 
 
+def unproxyAttrs(node):
+
+    for attr in maya.cmds.listAttr(node, unlocked=True, keyable=True, userDefined=True) or []:
+
+        plug = f"{node}.{attr}"
+        proxy = maya.cmds.addAttr(plug, q=True, usedAsProxy=True)
+
+        if not proxy:
+            continue
+
+        value = maya.cmds.getAttr(plug)
+        type_ = maya.cmds.getAttr(plug, type=True)
+
+        maya.cmds.deleteAttr(plug)
+        maya.cmds.addAttr(node, ln=attr, at=type_, dv=value, k=True)
+
+
 def loadAnims(
     paths,
     spacing=1,
@@ -651,14 +668,15 @@ class Animation(mutils.Pose):
                     if not FIX_SAVE_ANIM_REFERENCE_LOCKED_ERROR:
                         mutils.disconnectAll(dstNode)
 
-                    # Make sure we delete all proxy attributes, otherwise pasteKey will duplicate keys
-                    mutils.Attribute.deleteProxyAttrs(dstNode)
+                    unproxyAttrs(dstNode)
+
                     maya.cmds.pasteKey(dstNode)
 
                     attrs = maya.cmds.listAttr(dstNode, unlocked=True, keyable=True) or []
                     attrs = list(set(attrs) - set(['translate', 'rotate', 'scale']))
 
                     for attr in attrs:
+
                         dstAttr = mutils.Attribute(dstNode, attr)
                         dstCurve = dstAttr.animCurve()
 
@@ -809,10 +827,6 @@ class Animation(mutils.Pose):
 
                     if not dstAttr.exists():
                         logger.debug('Skipping attribute: The destination attribute "%s" does not exist!' % dstAttr.fullname())
-                        continue
-
-                    if dstAttr.isProxy():
-                        logger.debug('Skipping attribute: The destination attribute "%s" is a proxy attribute!', dstAttr.fullname())
                         continue
 
                     srcCurve = self.animCurve(srcNode.name(), attr, withNamespace=True)
