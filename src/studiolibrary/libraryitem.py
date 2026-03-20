@@ -89,7 +89,7 @@ class LibraryItem(studiolibrary.widgets.Item):
         import studiolibrary.library
 
         path = self.path()
-        path = studiolibrary.latestVersionPath(path) or path
+        path = studiolibrary.latestVersionPath(path)
 
         if studiolibrary.isVersionPath(path):
             dirname = os.path.dirname(path)
@@ -669,8 +669,9 @@ class LibraryItem(studiolibrary.widgets.Item):
         self.saving.emit(self)
 
         if os.path.exists(dst):
-            if studiolibrary.latestVersionPath(self.path()):
-                raise NameError("You can only save items that were "
+            vpath = studiolibrary.latestVersionPath(self.path())
+            if studiolibrary.isVersionPath(vpath):
+                raise NameError("Already Exists! You can only save items that were "
                                 "created using Studio Library version 2!")
             elif self._ignoreExistsDialog:
                 self._moveToTrash()

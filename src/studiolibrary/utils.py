@@ -1234,6 +1234,8 @@ def latestVersionPath(path):
 
     if version:
         return "{}/{}".format(path, version)
+    else:
+        return path
 
 
 def listPaths(path):

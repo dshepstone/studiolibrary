@@ -128,7 +128,8 @@ class SetsMenu(QtWidgets.QMenu):
         libraryWindow = self.item().libraryWindow()
 
         for path in paths:
-            item = setsitem.SetsItem(path)
+            vpath = studiolibrary.utils.latestVersionPath(path)
+            item = setsitem.SetsItem(vpath)
             item.setLibraryWindow(libraryWindow)
             items.append(item)
 

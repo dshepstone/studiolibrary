@@ -210,12 +210,10 @@ def findMirrorTable(path):
     )
 
     if mirrorTablePaths:
-        mirrorTablePath = mirrorTablePaths[0]
-
-        path = os.path.join(mirrorTablePath, "mirrortable.json")
-
-        if path:
-            mirrorTable = mutils.MirrorTable.fromPath(path)
+        vpath = mirrorTablePaths[0]
+        vpath = studiolibrary.utils.latestVersionPath(vpath)
+        path = os.path.join(vpath, "mirrortable.json")
+        mirrorTable = mutils.MirrorTable.fromPath(path)
 
     return mirrorTable
 
