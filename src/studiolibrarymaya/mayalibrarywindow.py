@@ -17,6 +17,7 @@ import logging
 import maya.cmds
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 from studiovendor.Qt import QtCore
+from studiovendor.Qt import QtGui
 from studiovendor.Qt import QtWidgets
 
 import studiolibrary
@@ -74,17 +75,45 @@ def mayaClosedEvent():
 class MayaLibraryWindow(MayaQWidgetDockableMixin, librarywindow.LibraryWindow):
     DEFAULT_SETTINGS = copy.deepcopy(librarywindow.LibraryWindow.DEFAULT_SETTINGS)
     DEFAULT_SETTINGS["theme"] = {
-        "accentColor": "rgb(74, 144, 217)",
-        "backgroundColor": "rgb(43, 43, 43)",
+        "accentColor": "rgb(79, 162, 222)",
+        "backgroundColor": "rgb(36, 37, 47)",
     }
+    CONESTOGA_STYLESHEET = """
+    QWidget#studiolibrary {
+        background-color: rgb(36, 37, 47);
+    }
+    QFrame#menuBarWidget {
+        background-color: rgb(41, 43, 56);
+    }
+    QFrame#statusWidget {
+        background-color: rgb(41, 43, 56);
+    }
+    QWidget#studiolibrary QListView::item:selected,
+    QWidget#studiolibrary QTreeView::item:selected {
+        background-color: rgb(68, 123, 179);
+    }
+    """
 
     def __init__(self, *args, **kwargs):
         super(MayaLibraryWindow, self).__init__(*args, **kwargs)
         self._toolsMenu = None
 
-        tip = "Conestoga mirror workflow tools."
-        icon = studiolibrary.resource.icon("sliders")
-        self.addMenuBarAction("Tools", icon, tip, callback=self.showToolsMenu)
+        self.applyConestogaTheme()
+
+        tip = "Conestoga tools from shepStudioAnimLib workflows."
+        icon = studiolibrary.resource.icon("arrows-rotate")
+        self.addMenuBarAction("Conestoga Tools", icon, tip, callback=self.showToolsMenu)
+
+    def applyConestogaTheme(self):
+        """Force a visible Conestoga theme even if old settings exist."""
+        self.theme().setAccentColor(QtGui.QColor(79, 162, 222))
+        self.theme().setBackgroundColor(QtGui.QColor(36, 37, 47))
+        self.reloadStyleSheet()
+
+    def reloadStyleSheet(self):
+        """Add Conestoga stylesheet layer after the base stylesheet reload."""
+        super(MayaLibraryWindow, self).reloadStyleSheet()
+        self.setStyleSheet(self.styleSheet() + "\n" + self.CONESTOGA_STYLESHEET)
 
     def showToolsMenu(self):
         """Show the Conestoga tools menu."""
@@ -99,13 +128,21 @@ class MayaLibraryWindow(MayaQWidgetDockableMixin, librarywindow.LibraryWindow):
 
             self._toolsMenu.addSeparator()
 
+            action = self._toolsMenu.addAction("Select Opposite Controls (R -> L)")
+            action.triggered.connect(lambda: self.selectOppositeControls(direction="R2L"))
+
+            action = self._toolsMenu.addAction("Select Opposite Controls (L -> R)")
+            action.triggered.connect(lambda: self.selectOppositeControls(direction="L2R"))
+
+            self._toolsMenu.addSeparator()
+
             action = self._toolsMenu.addAction("Snapshot Mirror (R -> L, XY Plane)")
             action.triggered.connect(lambda: self.runSnapshotMirror(direction="R2L", mirrorPlane="XY"))
 
             action = self._toolsMenu.addAction("Snapshot Mirror (R -> L, XZ Plane)")
             action.triggered.connect(lambda: self.runSnapshotMirror(direction="R2L", mirrorPlane="XZ"))
 
-        widget = self.menuBarWidget().findToolButton("Tools")
+        widget = self.menuBarWidget().findToolButton("Conestoga Tools")
         point = widget.mapToGlobal(QtCore.QPoint(0, widget.height()))
         self._toolsMenu.exec_(point)
 
@@ -124,6 +161,17 @@ class MayaLibraryWindow(MayaQWidgetDockableMixin, librarywindow.LibraryWindow):
 
         if skipped:
             logger.info("Conestoga mirror skipped objects/attrs: %s", skipped)
+
+    def selectOppositeControls(self, direction="R2L"):
+        """Select opposite-side controls based on side tokens."""
+        targets, missing = conestogatools.select_mirrored_controls(direction=direction)
+        if targets:
+            self.setToastMessage("Selected {0} opposite controls.".format(len(targets)))
+        else:
+            self.setToastMessage("No opposite controls were found.")
+
+        if missing:
+            logger.info("Conestoga mirror select missing controls: %s", missing)
 
     def destroy(self):
         """

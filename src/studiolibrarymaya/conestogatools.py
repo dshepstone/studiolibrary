@@ -14,6 +14,13 @@ import re
 
 import maya.cmds
 
+"""
+Conestoga Maya helper tools extracted from shepStudioAnimLib.py concepts:
+- directional side-token swaps
+- mirror-plane negate maps
+- snapshot mirror workflows
+"""
+
 
 TOKEN_PAIRS = [
     ("Left", "Right"), ("left", "right"), ("LEFT", "RIGHT"),
@@ -117,3 +124,40 @@ def snapshot_mirror_selected(direction="R2L", mirror_plane="YZ"):
                 skipped.append(dst_attr)
 
     return applied_count, skipped
+
+
+def select_mirrored_controls(direction="R2L"):
+    """
+    Replace current selection with mirrored opposite-side controls.
+
+    :type direction: str
+    :rtype: tuple[list[str], list[str]]
+    """
+    selection = maya.cmds.ls(selection=True) or []
+    targets = []
+    missing = []
+
+    for source in selection:
+        source_short = source.split("|")[-1]
+        namespace = ""
+        bare_name = source_short
+
+        if ":" in source_short:
+            namespace = source_short.rsplit(":", 1)[0] + ":"
+            bare_name = source_short.rsplit(":", 1)[1]
+
+        target_bare, swapped = swap_side_token_directional(bare_name, direction=direction)
+        if not swapped:
+            missing.append(source)
+            continue
+
+        target = namespace + target_bare
+        if maya.cmds.objExists(target):
+            targets.append(target)
+        else:
+            missing.append(target)
+
+    if targets:
+        maya.cmds.select(targets, replace=True)
+
+    return targets, missing
