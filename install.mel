@@ -2,11 +2,17 @@
 Drag and drop for Maya 2016+
 */
 
-global proc studioLibraryInstall() {
-    string $whatIs = `whatIs studioLibraryInstall`;
-    string $path = `substring $whatIs 25 999`;
-    string $filename = `substitute "install.mel" $path "install.py"`;;
+global proc studioLibraryConestogaInstall() {
+    string $whatIs = `whatIs studioLibraryConestogaInstall`;
+    string $prefix = "Mel procedure found in: ";
+    string $path = `substitute $prefix $whatIs ""`;
+    string $filename = `substitute "install.mel" $path "install.py"`;
     python("import imp;imp.load_source('_studioLibraryInstall', '"+$filename+"')");
 }
 
-studioLibraryInstall();
+// Backwards compatibility for older install scripts/shelf snippets.
+global proc studioLibraryInstall() {
+    studioLibraryConestogaInstall();
+}
+
+studioLibraryConestogaInstall();

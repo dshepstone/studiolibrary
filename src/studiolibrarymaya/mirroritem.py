@@ -25,6 +25,57 @@ except ImportError as error:
 logger = logging.getLogger(__name__)
 
 
+MIRROR_SETUP_PRESETS = [
+    ("Auto Detect", {
+        "leftSide": "",
+        "rightSide": "",
+        "mirrorPlane": "YZ",
+    }),
+    ("Left/Right (Word)", {
+        "leftSide": "Left",
+        "rightSide": "Right",
+        "mirrorPlane": "YZ",
+    }),
+    ("left/right (Word)", {
+        "leftSide": "left",
+        "rightSide": "right",
+        "mirrorPlane": "YZ",
+    }),
+    ("Lf/Rt (Suffix)", {
+        "leftSide": "*Lf",
+        "rightSide": "*Rt",
+        "mirrorPlane": "YZ",
+    }),
+    ("L/R (Suffix)", {
+        "leftSide": "*_L",
+        "rightSide": "*_R",
+        "mirrorPlane": "YZ",
+    }),
+    ("l/r (Suffix)", {
+        "leftSide": "*_l",
+        "rightSide": "*_r",
+        "mirrorPlane": "YZ",
+    }),
+    ("l_/r_ (Prefix)", {
+        "leftSide": "l_*",
+        "rightSide": "r_*",
+        "mirrorPlane": "YZ",
+    }),
+    ("Mirror Axis Y (XZ)", {
+        "leftSide": "",
+        "rightSide": "",
+        "mirrorPlane": "XZ",
+    }),
+    ("Mirror Axis Z (XY)", {
+        "leftSide": "",
+        "rightSide": "",
+        "mirrorPlane": "XY",
+    }),
+]
+
+MIRROR_SETUP_PRESET_MAP = dict(MIRROR_SETUP_PRESETS)
+
+
 def save(path, *args, **kwargs):
     """Convenience function for saving a MirrorItem."""
     MirrorItem(path).safeSave(*args, **kwargs)
@@ -125,6 +176,14 @@ class MirrorItem(baseitem.BaseItem):
                 "layout": "vertical"
             },
             {
+                "name": "mirrorSetup",
+                "type": "enum",
+                "default": "Auto Detect",
+                "layout": "vertical",
+                "items": [name for name, _ in MIRROR_SETUP_PRESETS],
+                "toolTip": "Quick mirror setup presets inspired by common rig naming conventions.",
+            },
+            {
                 "name": "mirrorPlane",
                 "type": "buttonGroup",
                 "default": "YZ",
@@ -171,19 +230,31 @@ class MirrorItem(baseitem.BaseItem):
         results = super(MirrorItem, self).saveValidator(**kwargs)
 
         objects = maya.cmds.ls(selection=True) or []
+        mirrorSetup = kwargs.get("mirrorSetup", "Auto Detect")
 
-        dirty = kwargs.get("fieldChanged") in ["leftSide", "rightSide"]
+        if kwargs.get("fieldChanged") == "mirrorSetup":
+            preset = MIRROR_SETUP_PRESET_MAP.get(mirrorSetup, MIRROR_SETUP_PRESET_MAP["Auto Detect"])
+            results.append({"name": "mirrorPlane", "value": preset.get("mirrorPlane", "YZ")})
+
+            if preset.get("leftSide"):
+                results.append({"name": "leftSide", "value": preset["leftSide"]})
+
+            if preset.get("rightSide"):
+                results.append({"name": "rightSide", "value": preset["rightSide"]})
+
+        dirty = kwargs.get("fieldChanged") in ["mirrorSetup", "leftSide", "rightSide"]
         dirty = dirty or self._validatedObjects != objects
 
         if dirty:
             self._validatedObjects = objects
 
             leftSide = kwargs.get("leftSide", "")
-            if not leftSide:
+            rightSide = kwargs.get("rightSide", "")
+
+            if mirrorSetup == "Auto Detect" and not leftSide:
                 leftSide = mutils.MirrorTable.findLeftSide(objects)
 
-            rightSide = kwargs.get("rightSide", "")
-            if not rightSide:
+            if mirrorSetup == "Auto Detect" and not rightSide:
                 rightSide = mutils.MirrorTable.findRightSide(objects)
 
             mt = mutils.MirrorTable.fromObjects(
