@@ -10,7 +10,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library. If not, see <http://www.gnu.org/licenses/>.
 
-__version__ = "2.21.1"
+__version__ = "Conestoga"
+__product__ = "Studio Library - Conestoga"
 
 
 def version():
@@ -20,6 +21,15 @@ def version():
     :rtype: str
     """
     return __version__
+
+
+def product():
+    """
+    Return the display product name for this fork.
+
+    :rtype: str
+    """
+    return __product__
 
 
 from studiolibrary import config

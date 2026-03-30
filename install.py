@@ -48,7 +48,7 @@ def _onMayaDropped():
 
     command = '''
 # -----------------------------------
-# Studio Library
+# Studio Library - Conestoga
 # www.studiolibrary.com
 # -----------------------------------
 
@@ -69,7 +69,7 @@ studiolibrary.main()
     parent = maya.cmds.tabLayout(shelf, query=True, selectTab=True)
     maya.cmds.shelfButton(
         command=command,
-        annotation='Studio Library',
+        annotation='Studio Library - Conestoga',
         sourceType='Python',
         image=iconPath,
         image1=iconPath,
