@@ -16,9 +16,12 @@ import logging
 
 import maya.cmds
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
+from studiovendor.Qt import QtCore
+from studiovendor.Qt import QtWidgets
 
 import studiolibrary
 from studiolibrary import librarywindow
+from studiolibrarymaya import conestogatools
 
 import mutils
 
@@ -74,6 +77,53 @@ class MayaLibraryWindow(MayaQWidgetDockableMixin, librarywindow.LibraryWindow):
         "accentColor": "rgb(74, 144, 217)",
         "backgroundColor": "rgb(43, 43, 43)",
     }
+
+    def __init__(self, *args, **kwargs):
+        super(MayaLibraryWindow, self).__init__(*args, **kwargs)
+        self._toolsMenu = None
+
+        tip = "Conestoga mirror workflow tools."
+        icon = studiolibrary.resource.icon("sliders")
+        self.addMenuBarAction("Tools", icon, tip, callback=self.showToolsMenu)
+
+    def showToolsMenu(self):
+        """Show the Conestoga tools menu."""
+        if not self._toolsMenu:
+            self._toolsMenu = QtWidgets.QMenu(self)
+
+            action = self._toolsMenu.addAction("Snapshot Mirror (R -> L)")
+            action.triggered.connect(lambda: self.runSnapshotMirror(direction="R2L"))
+
+            action = self._toolsMenu.addAction("Snapshot Mirror (L -> R)")
+            action.triggered.connect(lambda: self.runSnapshotMirror(direction="L2R"))
+
+            self._toolsMenu.addSeparator()
+
+            action = self._toolsMenu.addAction("Snapshot Mirror (R -> L, XY Plane)")
+            action.triggered.connect(lambda: self.runSnapshotMirror(direction="R2L", mirrorPlane="XY"))
+
+            action = self._toolsMenu.addAction("Snapshot Mirror (R -> L, XZ Plane)")
+            action.triggered.connect(lambda: self.runSnapshotMirror(direction="R2L", mirrorPlane="XZ"))
+
+        widget = self.menuBarWidget().findToolButton("Tools")
+        point = widget.mapToGlobal(QtCore.QPoint(0, widget.height()))
+        self._toolsMenu.exec_(point)
+
+    def runSnapshotMirror(self, direction="R2L", mirrorPlane="YZ"):
+        """Mirror current selected controls to the opposite side."""
+        appliedCount, skipped = conestogatools.snapshot_mirror_selected(
+            direction=direction,
+            mirror_plane=mirrorPlane,
+        )
+
+        if appliedCount:
+            message = "Conestoga mirror complete: {0} values applied.".format(appliedCount)
+            self.setToastMessage(message)
+        else:
+            self.setToastMessage("Conestoga mirror finished with no applied values.")
+
+        if skipped:
+            logger.info("Conestoga mirror skipped objects/attrs: %s", skipped)
 
     def destroy(self):
         """
