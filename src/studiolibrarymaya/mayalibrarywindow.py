@@ -10,6 +10,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library. If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 import uuid
 import logging
 
@@ -68,6 +69,11 @@ def mayaClosedEvent():
 
 
 class MayaLibraryWindow(MayaQWidgetDockableMixin, librarywindow.LibraryWindow):
+    DEFAULT_SETTINGS = copy.deepcopy(librarywindow.LibraryWindow.DEFAULT_SETTINGS)
+    DEFAULT_SETTINGS["theme"] = {
+        "accentColor": "rgb(74, 144, 217)",
+        "backgroundColor": "rgb(43, 43, 43)",
+    }
 
     def destroy(self):
         """
