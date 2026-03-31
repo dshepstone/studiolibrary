@@ -415,12 +415,14 @@ class PoseItem(baseitem.BaseItem):
         mirror = kwargs.get("mirror", False)
         mirrorTable = kwargs.get("mirrorTable")
 
+        # Always pop shep-specific keys so they never reach Pose.load()
+        mirror_direction = kwargs.pop("mirrorDirection", "L2R")
+        mirror_axis = kwargs.pop("mirrorAxis", "X")
+
         if mirror and not mirrorTable:
             # Use ShepStudio orientation-aware mirror.
             namespaces = kwargs.get("namespaces") or []
             objects = kwargs.get("objects") or []
-            mirror_direction = kwargs.get("mirrorDirection", "L2R")
-            mirror_axis = kwargs.get("mirrorAxis", "X")
 
             applied = mutils.shepmirroring.studio_import_pose_with_mirror(
                 self.transferPath(),
