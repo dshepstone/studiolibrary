@@ -168,8 +168,11 @@ class PoseLoadWidget(baseloadwidget.BaseLoadWidget):
             del self._options["namespaceOption"]
             del self._options["searchAndReplaceEnabled"]
 
-            # mirrorDirection / mirrorAxis are consumed by PoseItem.load()
-            # when using orientation-aware mirror; pass them through.
+            # Remove shep-mirror keys so they never reach mutils.Pose.load()
+            # which doesn't accept them. PoseItem.load() handles mirror
+            # independently via its own kwargs.
+            self._options.pop("mirrorDirection", None)
+            self._options.pop("mirrorAxis", None)
 
         self.ui.blendEdit.blockSignals(True)
         self.ui.blendSlider.setValue(blend)
