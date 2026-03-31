@@ -21,6 +21,7 @@ from studiovendor.Qt import QtWidgets
 
 from studiolibrarymaya import baseitem
 from studiolibrarymaya import baseloadwidget
+from studiolibrarymaya import mirrormapdialog
 
 try:
     import mutils
@@ -91,8 +92,14 @@ class PoseLoadWidget(baseloadwidget.BaseLoadWidget):
 
         layout.addWidget(self.ui.blendSlider)
         layout.addWidget(self.ui.blendEdit)
+        self.ui.mirrorMapButton = QtWidgets.QPushButton("Mirror Map", self)
+        self.ui.mirrorMapButton.clicked.connect(self.showMirrorMapManager)
+        layout.addWidget(self.ui.mirrorMapButton)
 
         self.setCustomWidget(self.ui.blendFrame)
+
+    def showMirrorMapManager(self):
+        mirrormapdialog.showMirrorMapManager(parent=self)
 
     def _itemDoubleClicked(self):
         """Triggered when the user double-clicks a pose."""
@@ -352,16 +359,23 @@ class PoseItem(baseitem.BaseItem):
         :rtype: list[dict]
         """
         # Mirror check box
-        mirrorTip = "Cannot find a mirror table!"
+        mirrorTip = "Cannot find a mirror table or rig mirror map!"
         mirrorTable = findMirrorTable(self.path())
+        mirrorMapManager = mutils.MirrorMapManager()
+        rig_id = mutils.StudioLibraryMirrorAdapter.detect_rig_id(
+            objects=maya.cmds.ls(selection=True, long=True) or []
+        )
+        hasMirrorMap = mirrorMapManager.has_map(rig_id)
         if mirrorTable:
             mirrorTip = "Using mirror table: %s" % mirrorTable.path()
+        elif hasMirrorMap:
+            mirrorTip = "Using rig mirror map: %s" % rig_id
 
         fields = [
             {
                 "name": "mirror",
                 "toolTip": mirrorTip,
-                "enabled": mirrorTable is not None,
+                "enabled": mirrorTable is not None or hasMirrorMap,
             },
             {
                 "name": "searchAndReplace",

@@ -1,0 +1,45 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "StudioLibrary Rig Mirror Map",
+    "type": "object",
+    "required": [
+        "schema",
+        "version",
+        "rig_id",
+        "left_token",
+        "right_token",
+        "mirror_axis",
+        "controls",
+        "manual_pairs",
+        "excluded_controls"
+    ],
+    "properties": {
+        "schema": {"const": "studiolibrary.mirror_map"},
+        "version": {"type": "integer", "minimum": 1},
+        "rig_id": {"type": "string"},
+        "left_token": {"type": "string"},
+        "right_token": {"type": "string"},
+        "mirror_axis": {"type": "string", "enum": ["x", "y", "z"]},
+        "default_rules": {
+            "type": "object",
+            "additionalProperties": {"type": "string", "enum": ["copy", "negate", "ignore"]}
+        },
+        "controls": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "partner": {"type": ["string", "null"]},
+                    "side": {"type": "string", "enum": ["left", "right", "middle"]},
+                    "full_path": {"type": ["string", "null"]},
+                    "rules": {
+                        "type": "object",
+                        "additionalProperties": {"type": "string", "enum": ["copy", "negate", "ignore"]}
+                    }
+                }
+            }
+        },
+        "manual_pairs": {"type": "object", "additionalProperties": {"type": "string"}},
+        "excluded_controls": {"type": "array", "items": {"type": "string"}}
+    }
+}
