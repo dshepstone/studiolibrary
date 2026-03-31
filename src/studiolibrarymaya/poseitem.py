@@ -65,9 +65,13 @@ class PoseLoadWidget(baseloadwidget.BaseLoadWidget):
         self._pose = mutils.Pose.fromPath(self.item().transferPath())
 
         self.ui.blendFrame = QtWidgets.QFrame(self)
+        self.ui.mirrorInfoFrame = QtWidgets.QFrame(self)
 
         layout = QtWidgets.QHBoxLayout()
         self.ui.blendFrame.setLayout(layout)
+        infoLayout = QtWidgets.QVBoxLayout()
+        infoLayout.setContentsMargins(6, 6, 6, 6)
+        self.ui.mirrorInfoFrame.setLayout(infoLayout)
 
         if self.item().libraryWindow():
             self.item().libraryWindow().itemsWidget().itemSliderMoved.connect(self._sliderMoved)
@@ -97,9 +101,42 @@ class PoseLoadWidget(baseloadwidget.BaseLoadWidget):
         layout.addWidget(self.ui.mirrorMapButton)
 
         self.setCustomWidget(self.ui.blendFrame)
+        self.ui.mirrorStatusLabel = QtWidgets.QLabel(self)
+        self.ui.mirrorStatusLabel.setWordWrap(True)
+        self.ui.mirrorStatusLabel.setObjectName("mirrorStatusLabel")
+        self.ui.mirrorHelpLabel = QtWidgets.QLabel(self)
+        self.ui.mirrorHelpLabel.setWordWrap(True)
+        self.ui.mirrorHelpLabel.setObjectName("mirrorHelpLabel")
+        self.ui.mirrorHelpLabel.setText(
+            "How to mirror selected controllers:\\n"
+            "1) Select the controls to receive the mirrored pose.\\n"
+            "2) Enable the 'Mirror' option in Options.\\n"
+            "3) Click 'Mirror Map' to review manual pairs/exclusions for this rig.\\n"
+            "4) Click Apply (or move Blend slider) to load mirrored values."
+        )
+        infoLayout.addWidget(self.ui.mirrorStatusLabel)
+        infoLayout.addWidget(self.ui.mirrorHelpLabel)
+        self.setCustomWidget(self.ui.mirrorInfoFrame)
+        self._updateMirrorStatus()
 
     def showMirrorMapManager(self):
         mirrormapdialog.showMirrorMapManager(parent=self)
+        self._updateMirrorStatus()
+
+    def selectionChanged(self):
+        super(PoseLoadWidget, self).selectionChanged()
+        self._updateMirrorStatus()
+
+    def _updateMirrorStatus(self):
+        objects = maya.cmds.ls(selection=True, long=True) or []
+        rig_id = mutils.StudioLibraryMirrorAdapter.detect_rig_id(objects=objects)
+        manager = mutils.MirrorMapManager()
+        hasMap = manager.has_map(rig_id)
+        if hasMap:
+            text = "✅ Rig mirror map ready for '{0}'. Mirroring will use rig map rules first.".format(rig_id)
+        else:
+            text = "⚠️ No rig mirror map found for '{0}'. Use 'Mirror Map' to create/import one.".format(rig_id)
+        self.ui.mirrorStatusLabel.setText(text)
 
     def _itemDoubleClicked(self):
         """Triggered when the user double-clicks a pose."""
