@@ -255,11 +255,12 @@ class Theme(QtCore.QObject):
 
     updated = QtCore.Signal()
 
-    DEFAULT_DARK_COLOR = QtGui.QColor(60, 60, 60)
+    DEFAULT_DARK_COLOR = QtGui.QColor(43, 43, 43)
     DEFAULT_LIGHT_COLOR = QtGui.QColor(220, 220, 220)
 
-    DEFAULT_ACCENT_COLOR = QtGui.QColor(30, 145, 245)
-    DEFAULT_BACKGROUND_COLOR = QtGui.QColor(50, 50, 60)
+    # ShepStudio-matched defaults: #4a90d9 accent on #2b2b2b background
+    DEFAULT_ACCENT_COLOR = QtGui.QColor(74, 144, 217)
+    DEFAULT_BACKGROUND_COLOR = QtGui.QColor(43, 43, 43)
 
     def __init__(self):
         QtCore.QObject.__init__(self)
