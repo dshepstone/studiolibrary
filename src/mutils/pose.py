@@ -57,6 +57,7 @@ pose.load(objects=["Character1:Hand_L", "Character1:Finger_L"])
 import logging
 
 import mutils
+from mutils import mirrormap
 
 try:
     import maya.cmds
@@ -134,6 +135,7 @@ class Pose(mutils.TransferObject):
         self._selection = None
         self._mirrorTable = None
         self._autoKeyFrame = None
+        self._mirrorAdapter = None
 
     def createObjectData(self, name):
         """
@@ -356,6 +358,7 @@ class Pose(mutils.TransferObject):
             clearSelection=False,
             ignoreConnected=False,
             searchAndReplace=None,
+            useMirrorMap=True,
     ):
         """
         Load the pose to the given objects or namespaces.
@@ -376,8 +379,8 @@ class Pose(mutils.TransferObject):
         :type clearSelection: bool
         :type searchAndReplace: (str, str) or None
         """
-        if mirror and not mirrorTable:
-            logger.warning("Cannot mirror pose without a mirror table!")
+        if mirror and not mirrorTable and not useMirrorMap:
+            logger.warning("Cannot mirror pose without a mirror table or mirror map!")
             mirror = False
 
         if batchMode:
@@ -393,6 +396,8 @@ class Pose(mutils.TransferObject):
             onlyConnected=onlyConnected,
             ignoreConnected=ignoreConnected,
             searchAndReplace=searchAndReplace,
+            mirror=mirror,
+            useMirrorMap=useMirrorMap,
         )
 
         self.beforeLoad(clearSelection=clearSelection)
@@ -419,6 +424,8 @@ class Pose(mutils.TransferObject):
             batchMode=False,
             clearCache=True,
             searchAndReplace=None,
+            mirror=False,
+            useMirrorMap=True,
     ):
         """
         Update the pose cache.
@@ -460,6 +467,23 @@ class Pose(mutils.TransferObject):
 
             if mirrorTable:
                 self.setMirrorTable(mirrorTable)
+            self._mirrorAdapter = None
+            if mirror and useMirrorMap:
+                rig_id = mirrormap.StudioLibraryMirrorAdapter.detect_rig_id(
+                    objects=objects or [],
+                    pose_objects=list(srcObjects.keys()),
+                )
+                manager = mirrormap.MirrorMapManager()
+                logger.debug("active rig detected: %s", rig_id)
+                if manager.has_map(rig_id):
+                    mirror_map = manager.load(rig_id)
+                    logger.debug("mirror map loaded: %s", rig_id)
+                    self._mirrorAdapter = mirrormap.StudioLibraryMirrorAdapter(mirror_map)
+                else:
+                    logger.warning(
+                        "No mirror map found for rig '%s'. Falling back to mirror table/default behavior.",
+                        rig_id
+                    )
 
             search = None
             replace = None
@@ -545,6 +569,12 @@ class Pose(mutils.TransferObject):
             except mutils.MoreThanOneObjectFoundError as msg:
                 logger.debug(msg)
 
+        if self._mirrorAdapter:
+            mirrorDst = self._mirrorAdapter.resolve_destination(dstNode.name())
+            if not mirrorDst:
+                return
+            dstNode = mutils.Node(mirrorDst)
+
         for attr in self.attrs(srcName):
 
             if attrs and attr not in attrs:
@@ -558,7 +588,13 @@ class Pose(mutils.TransferObject):
 
             type_ = self.attrType(srcName, attr)
             value = self.attrValue(srcName, attr)
+            if self._mirrorAdapter and self._mirrorAdapter.should_skip_attr(dstNode.name(), attr, type_):
+                self._mirrorAdapter.stats["skipped"] += 1
+                continue
+
             srcMirrorValue = self.mirrorValue(mirrorObject, attr, mirrorAxis=mirrorAxis)
+            if self._mirrorAdapter:
+                srcMirrorValue = self._mirrorAdapter.mirrored_value(dstNode.name(), attr, value)
 
             srcAttribute = mutils.Attribute(dstNode.name(), attr, value=value, type=type_)
             dstAttribute.update()
@@ -586,6 +622,13 @@ class Pose(mutils.TransferObject):
                 try:
                     dstAttribute.set(value, blend=blend, key=key,
                                      additive=additive)
+                    if self._mirrorAdapter:
+                        self._mirrorAdapter.stats["success"] += 1
                 except (ValueError, RuntimeError):
                     cache[i] = (None, None)
+                    if self._mirrorAdapter:
+                        self._mirrorAdapter.stats["errors"] += 1
                     logger.debug('Ignoring %s', dstAttribute.fullname())
+
+        if self._mirrorAdapter:
+            self._mirrorAdapter.log_summary()

@@ -28,3 +28,4 @@ from .selectionset import SelectionSet, saveSelectionSet
 from .pose import Pose, savePose, loadPose
 from .animation import Animation, PasteOption, saveAnim, loadAnims
 from .mirrortable import MirrorTable, MirrorOption, saveMirrorTable
+from .mirrormap import MirrorMap, MirrorMapManager, StudioLibraryMirrorAdapter
