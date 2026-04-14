@@ -18,6 +18,7 @@ from studiolibrarymaya import baseitem
 try:
     import mutils
     import mutils.gui
+    import mutils.shepmirroring
     import maya.cmds
 except ImportError as error:
     print(error)
@@ -91,6 +92,13 @@ class AnimItem(baseitem.BaseItem):
                 "label": {"name": ""}
             },
             {
+                "name": "frameOffset",
+                "title": "Frame Offset",
+                "type": "int",
+                "default": 0,
+                "persistent": True,
+            },
+            {
                 "name": "sourceTime",
                 "title": "source",
                 "type": "range",
@@ -103,28 +111,119 @@ class AnimItem(baseitem.BaseItem):
                 "items": ["replace", "replace all", "insert", "merge"],
                 "persistent": True,
             },
+            {
+                "name": "mirrorGroup",
+                "title": "Mirror",
+                "type": "group",
+                "order": 3,
+            },
+            {
+                "name": "mirrorEnabled",
+                "title": "Mirror",
+                "type": "bool",
+                "inline": True,
+                "default": False,
+                "persistent": True,
+            },
+            {
+                "name": "mirrorDirection",
+                "title": "Direction",
+                "type": "radio",
+                "value": "L2R",
+                "items": ["L2R", "R2L"],
+                "default": "L2R",
+                "persistent": True,
+                "persistentKey": "AnimItem",
+            },
+            {
+                "name": "mirrorAxis",
+                "title": "Mirror Axis",
+                "type": "enum",
+                "default": "X",
+                "items": ["X", "Y", "Z"],
+                "persistent": True,
+                "persistentKey": "AnimItem",
+            },
         ])
 
         return schema
+
+    def loadValidator(self, **values):
+        """
+        Show/hide mirror direction and axis based on mirrorEnabled.
+
+        :type values: dict
+        :rtype: list[dict]
+        """
+        mirror_on = values.get("mirrorEnabled", False)
+
+        fields = [
+            {
+                "name": "mirrorDirection",
+                "visible": mirror_on,
+            },
+            {
+                "name": "mirrorAxis",
+                "visible": mirror_on,
+            },
+        ]
+
+        fields.extend(super(AnimItem, self).loadValidator(**values))
+        return fields
 
     def load(self, **kwargs):
         """
         Load the animation for the given objects and options.
 
+        Supports an optional *frameOffset* (int) that shifts the pasted
+        animation relative to the current time, and orientation-aware
+        mirroring via *mirrorEnabled*, *mirrorDirection*, and *mirrorAxis*.
+
         :type kwargs: dict
         """
+        frame_offset = kwargs.get("frameOffset", 0) or 0
+        mirror_enabled = kwargs.get("mirrorEnabled", False)
+        mirror_direction = kwargs.get("mirrorDirection", "L2R")
+        mirror_axis = kwargs.get("mirrorAxis", "X")
+        namespaces = kwargs.get("namespaces")
+        objects = kwargs.get("objects")
+
+        # Determine the effective startFrame, shifting by frameOffset.
+        start_frame = kwargs.get("startFrame")
+        if frame_offset and kwargs.get("currentTime", True):
+            try:
+                current = maya.cmds.currentTime(query=True)
+                start_frame = int(current) + int(frame_offset)
+            except Exception:
+                pass
+
         anim = mutils.Animation.fromPath(self.path())
         anim.load(
-            objects=kwargs.get("objects"),
-            namespaces=kwargs.get("namespaces"),
+            objects=objects,
+            namespaces=namespaces,
             attrs=kwargs.get("attrs"),
-            startFrame=kwargs.get("startFrame"),
+            startFrame=start_frame,
             sourceTime=kwargs.get("sourceTime"),
             option=kwargs.get("option"),
             connect=kwargs.get("connect"),
             mirrorTable=kwargs.get("mirrorTable"),
-            currentTime=kwargs.get("currentTime")
+            currentTime=kwargs.get("currentTime"),
         )
+
+        # If orientation-aware mirror is enabled, apply a snapshot mirror
+        # on top of the freshly-pasted animation using the selected objects.
+        if mirror_enabled:
+            target_ns = namespaces[0] if namespaces else ""
+            if not target_ns and objects:
+                # Infer namespace from first object.
+                leaf = objects[0].split("|")[-1]
+                target_ns = leaf.rsplit(":", 1)[0] if ":" in leaf else ""
+
+            mutils.shepmirroring.snapshot_mirror(
+                direction=mirror_direction,
+                target_ns=target_ns,
+                mirror_axis=mirror_axis,
+            )
 
     def saveSchema(self):
         """

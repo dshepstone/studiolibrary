@@ -1513,3 +1513,271 @@ SidebarWidget #titleWidget LineEdit {
     border: 0px solid rbga(0,0,0,0);
     border-radius: 3px;
 }
+
+/*
+ ============================================================================
+ ShepStudio visual enhancements — borders, rounded corners, dark tooltips
+ ============================================================================
+*/
+
+/* --------------------------------------------------------------------------
+   Group boxes — clearly bounded sections with rounded corners
+ -------------------------------------------------------------------------- */
+
+QGroupBox {
+    font-weight: bold;
+    font-size: 11px;
+    color: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 175);
+    border: 1px solid rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 45);
+    border-radius: 5px;
+    margin-top: 10px;
+    padding: 14px 6px 6px 6px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 1px 8px;
+    left: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   Buttons — subtle border + rounded corners, matching ShepStudio feel
+ -------------------------------------------------------------------------- */
+
+QPushButton {
+    border: 1px solid rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 30);
+    border-radius: 4px;
+    padding: 4px 14px;
+    min-height: 22px;
+}
+
+QPushButton:hover {
+    border: 1px solid rgba(ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B, 160);
+    background-color: rgba(ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B, 55);
+}
+
+QPushButton:pressed {
+    background-color: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 10);
+    border-color: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 25);
+}
+
+QPushButton:disabled {
+    color: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 50);
+    border-color: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 15);
+}
+
+/* Apply / accept button — prominent accent-coloured, matches ShepStudio import btn */
+QPushButton#acceptButton {
+    font: bold 12px;
+    color: ACCENT_FOREGROUND_COLOR;
+    background-color: rgba(ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B, 200);
+    border: 1px solid rgba(ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B, 220);
+    border-radius: 5px;
+    min-height: 30px;
+    padding: 5px 20px;
+}
+
+QPushButton#acceptButton:hover {
+    background-color: rgba(ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B, 240);
+    border-color: rgba(ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B, 255);
+}
+
+/* --------------------------------------------------------------------------
+   Input fields — visible border, rounded corners
+ -------------------------------------------------------------------------- */
+
+QSpinBox,
+QLineEdit,
+QComboBox {
+    border: 1px solid rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 35);
+    border-radius: 4px;
+    padding: 3px 6px;
+    height: 24px;
+    background-color: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 12);
+}
+
+QSpinBox:hover,
+QLineEdit:hover,
+QComboBox:hover {
+    border: 1px solid rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 65);
+    background-color: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 20);
+}
+
+QSpinBox:focus,
+QLineEdit:focus,
+QComboBox:focus {
+    border: 1px solid ACCENT_COLOR;
+    background-color: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 18);
+}
+
+QComboBox::drop-down {
+    border: 0px;
+    width: 22px;
+    padding-top: 2px;
+    background-color: transparent;
+    image: url("RESOURCE_DIRNAME/icons/drop_arrow_DARKNESS.png");
+}
+
+/* --------------------------------------------------------------------------
+   Dark tooltips — ShepStudio uses #404040 bg with soft border
+ -------------------------------------------------------------------------- */
+
+QToolTip {
+    background-color: rgba(BACKGROUND_COLOR_R, BACKGROUND_COLOR_G, BACKGROUND_COLOR_B, 242);
+    color: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 220);
+    border: 1px solid rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 55);
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 11px;
+}
+
+/* --------------------------------------------------------------------------
+   Scrollbars — slightly wider handle, rounded, more visible on hover
+ -------------------------------------------------------------------------- */
+
+QScrollBar:vertical {
+    width: 10px;
+    background: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 5);
+}
+
+QScrollBar:horizontal {
+    height: 10px;
+    background: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 5);
+}
+
+QScrollBar::handle:vertical,
+QScrollBar::handle:horizontal {
+    min-height: 20px;
+    min-width: 20px;
+    border-radius: 4px;
+    background: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 40);
+}
+
+QScrollBar::handle:vertical:hover,
+QScrollBar::handle:horizontal:hover {
+    background: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 80);
+}
+
+/* --------------------------------------------------------------------------
+   Splitter handle — thin, accent on hover
+ -------------------------------------------------------------------------- */
+
+QSplitter {
+    max-width: 1px;
+    max-height: 1px;
+    background-color: BACKGROUND_COLOR;
+}
+
+QSplitter::handle {
+    background-color: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 18);
+}
+
+QSplitter::handle:hover {
+    background-color: rgba(ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B, 160);
+}
+
+/* --------------------------------------------------------------------------
+   Menu — rounded, subtle border like ShepStudio
+ -------------------------------------------------------------------------- */
+
+QMenu {
+    border: 1px solid rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 40);
+    border-radius: 4px;
+    padding: 4px;
+}
+
+QMenu::item {
+    padding: 5px 24px 5px 20px;
+    border-radius: 3px;
+}
+
+QMenu::separator {
+    height: 1px;
+    margin: 3px 8px;
+    background: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 30);
+}
+
+/* --------------------------------------------------------------------------
+   Status bar — thin top border matching ShepStudio status bar
+ -------------------------------------------------------------------------- */
+
+StatusWidget {
+    font-size: 10px;
+    border-top: 1px solid rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 18);
+}
+
+/* --------------------------------------------------------------------------
+   Menu bar tool buttons — subtle hover with rounded corners
+ -------------------------------------------------------------------------- */
+
+MenuBarWidget QToolButton:Hover {
+    background-color: rgba(255, 255, 255, 40);
+    border-radius: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   Tree / list view — subtle row borders on hover
+ -------------------------------------------------------------------------- */
+
+QTreeView::item:hover,
+QListView::item:hover {
+    background-color: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 22);
+    border-radius: 3px;
+}
+
+QTreeView::item:selected,
+QTreeView::item:selected:active,
+QListView::item:selected,
+QListView::item:selected:active {
+    color: ACCENT_FOREGROUND_COLOR;
+    background-color: rgba(ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B, 200);
+    border-radius: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   Check box + radio button indicators — ShepStudio rounded style
+ -------------------------------------------------------------------------- */
+
+QCheckBox::indicator {
+    width: 14px;
+    height: 14px;
+    border: 1px solid rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 55);
+    border-radius: 3px;
+    background-color: rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 12);
+}
+
+QCheckBox::indicator:checked {
+    image: url("RESOURCE_DIRNAME/icons/check_box_checked_DARKNESS.png");
+    background-color: rgba(ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B, 200);
+    border-color: rgba(ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B, 220);
+}
+
+QCheckBox::indicator:hover {
+    border-color: rgba(ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B, 160);
+}
+
+/* --------------------------------------------------------------------------
+   Preview frame buttons — keep them consistent
+ -------------------------------------------------------------------------- */
+
+PreviewFrame QPushButton {
+    border: 1px solid rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 25);
+    border-radius: 4px;
+    padding: 3px 10px;
+    min-height: 20px;
+}
+
+PreviewFrame QPushButton:hover {
+    color: ACCENT_FOREGROUND_COLOR;
+    background-color: rgba(ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B, 180);
+    border-color: rgba(ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B, 210);
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar title widget — keep its background transparent
+ -------------------------------------------------------------------------- */
+
+SidebarWidget #titleWidget LineEdit {
+    border: 1px solid rgba(FOREGROUND_COLOR_R, FOREGROUND_COLOR_G, FOREGROUND_COLOR_B, 25);
+}

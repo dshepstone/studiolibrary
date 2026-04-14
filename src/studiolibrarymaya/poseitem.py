@@ -24,6 +24,7 @@ from studiolibrarymaya import baseloadwidget
 
 try:
     import mutils
+    import mutils.shepmirroring
     import maya.cmds
 except ImportError as error:
     print(error)
@@ -167,6 +168,12 @@ class PoseLoadWidget(baseloadwidget.BaseLoadWidget):
             del self._options["namespaceOption"]
             del self._options["searchAndReplaceEnabled"]
 
+            # Remove shep-mirror keys so they never reach mutils.Pose.load()
+            # which doesn't accept them. PoseItem.load() handles mirror
+            # independently via its own kwargs.
+            self._options.pop("mirrorDirection", None)
+            self._options.pop("mirrorAxis", None)
+
         self.ui.blendEdit.blockSignals(True)
         self.ui.blendSlider.setValue(blend)
         self.ui.blendEdit.setText(str(int(blend)))
@@ -298,6 +305,25 @@ class PoseItem(baseitem.BaseItem):
                 "persistent": True,
             },
             {
+                "name": "mirrorDirection",
+                "title": "Direction",
+                "type": "radio",
+                "value": "L2R",
+                "items": ["L2R", "R2L"],
+                "default": "L2R",
+                "persistent": True,
+                "persistentKey": "PoseItem",
+            },
+            {
+                "name": "mirrorAxis",
+                "title": "Mirror Axis",
+                "type": "enum",
+                "default": "X",
+                "items": ["X", "Y", "Z"],
+                "persistent": True,
+                "persistentKey": "PoseItem",
+            },
+            {
                 "name": "additive",
                 "type": "bool",
                 "inline": True,
@@ -351,17 +377,27 @@ class PoseItem(baseitem.BaseItem):
         :type values: dict
         :rtype: list[dict]
         """
-        # Mirror check box
-        mirrorTip = "Cannot find a mirror table!"
+        mirrorEnabled = values.get("mirror", False)
         mirrorTable = findMirrorTable(self.path())
+
         if mirrorTable:
-            mirrorTip = "Using mirror table: %s" % mirrorTable.path()
+            mirrorTip = "Mirror using table: %s" % mirrorTable.path()
+        else:
+            mirrorTip = "Mirror using orientation-aware algorithm (no mirror table required)"
 
         fields = [
             {
                 "name": "mirror",
                 "toolTip": mirrorTip,
-                "enabled": mirrorTable is not None,
+                "enabled": True,
+            },
+            {
+                "name": "mirrorDirection",
+                "visible": mirrorEnabled,
+            },
+            {
+                "name": "mirrorAxis",
+                "visible": mirrorEnabled and not mirrorTable,
             },
             {
                 "name": "searchAndReplace",
@@ -372,6 +408,35 @@ class PoseItem(baseitem.BaseItem):
         fields.extend(super(PoseItem, self).loadValidator(**values))
 
         return fields
+
+    def load(self, **kwargs):
+        """
+        Load the pose, using orientation-aware mirror when no mirror table exists.
+
+        :type kwargs: dict
+        """
+        mirror = kwargs.get("mirror", False)
+        mirrorTable = kwargs.get("mirrorTable")
+
+        # Always pop shep-specific keys so they never reach Pose.load()
+        mirror_direction = kwargs.pop("mirrorDirection", "L2R")
+        mirror_axis = kwargs.pop("mirrorAxis", "X")
+
+        if mirror and not mirrorTable:
+            # Use ShepStudio orientation-aware mirror.
+            namespaces = kwargs.get("namespaces") or []
+            objects = kwargs.get("objects") or []
+
+            applied = mutils.shepmirroring.studio_import_pose_with_mirror(
+                self.transferPath(),
+                namespaces=namespaces,
+                objects=objects,
+                mirror_direction=mirror_direction,
+                mirror_axis=mirror_axis,
+            )
+            logger.debug("Orientation-aware mirror applied %d attrs", applied)
+        else:
+            super(PoseItem, self).load(**kwargs)
 
     def save(self, objects, **kwargs):
         """

@@ -28,3 +28,6 @@ from .selectionset import SelectionSet, saveSelectionSet
 from .pose import Pose, savePose, loadPose
 from .animation import Animation, PasteOption, saveAnim, loadAnims
 from .mirrortable import MirrorTable, MirrorOption, saveMirrorTable
+
+from . import shepmirroring
+from .shepmirroring import snapshot_mirror, detect_scene_namespaces
